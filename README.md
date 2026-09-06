@@ -1,81 +1,109 @@
-# Approximate Machine Unlearning with Gradient and Hessian-Based Methods
+# Approximate Machine Unlearning with Gradient and Curvature Methods
 
 ## Overview
 
-Machine unlearning aims to reduce the influence of selected training data from an already-trained machine learning model without completely retraining the model from scratch.
+This project explores the problem of machine unlearning: reducing the influence of selected training data from a trained machine learning model without completely retraining the model from scratch.
 
-This project explores a gradient- and Hessian-based approach to approximate machine unlearning using PyTorch and the MNIST dataset.
+The project compares three models:
 
-## Objective
+1. **Full Model**: trained using the complete dataset.
+2. **Unlearned Model**: starts from the full model and applies a first-order gradient-ascent update on the selected forgotten data.
+3. **Retrained Model**: trained from scratch after removing the forgotten data.
 
-The experiment compares three models:
-
-1. **Full Model** - trained using the complete training subset.
-2. **Unlearned Model** - starts from the full model and applies a first-order gradient-ascent update using the data selected for forgetting.
-3. **Retrained Model** - trained from scratch after removing the forgotten data, serving as a reference.
+The retrained model provides a reference for evaluating how closely the approximate unlearning procedure approaches retraining.
 
 ## Method
 
-The theoretical formulation is based on the relationship between the retained-data loss and the forgotten-data gradient.
+The project uses a small multilayer perceptron (MLP) trained on a subset of the MNIST dataset.
 
-A second-order approximation gives:
-
-`Δθ ≈ H⁻¹∇L_F`
-
-where:
-
-- `∇L_F` is the gradient of the forgotten-data loss.
-- `H` is the Hessian of the retained-data loss.
-- `Δθ` is the approximate parameter update.
-
-Instead of explicitly constructing the Hessian, the project demonstrates the use of **Hessian-vector products (HVPs)**.
-
-A full iterative second-order solve was found to be computationally impractical on the available CPU, so the final experiment uses a first-order gradient-ascent baseline.
-
-## Experimental Setup
+The final experiment uses:
 
 - Dataset: MNIST
-- Experimental subset: 5,000 training examples
-- Forget set: 100 examples
-- Retain set: 4,900 examples
-- Model: Small MLP
-- Parameters: 25,450
+- Experimental training subset: 5,000 samples
+- Forget set: 100 samples
+- Retain set: 4,900 samples
+- Model: MLP with 25,450 parameters
 - Optimizer: Adam
 - Training epochs: 5
-- Framework: PyTorch
+- Unlearning method: First-order gradient ascent
+- Gradient-ascent step size: 0.1
+
+The project also explores the theoretical basis of second-order unlearning using the Hessian and Hessian-vector products (HVPs).
+
+## Hessian-Based Formulation
+
+At a trained optimum:
+
+\[
+\nabla L_{all}(\theta^*) \approx 0
+\]
+
+Since:
+
+\[
+L_{all} = L_R + L_F
+\]
+
+we obtain:
+
+\[
+\nabla L_R(\theta^*) \approx -\nabla L_F(\theta^*)
+\]
+
+Using a second-order approximation gives:
+
+\[
+H_R \Delta\theta \approx \nabla L_F
+\]
+
+and therefore:
+
+\[
+\Delta\theta \approx H_R^{-1}\nabla L_F
+\]
+
+Instead of explicitly constructing the full Hessian, the project demonstrates Hessian-vector products.
+
+A full iterative second-order solve was found to be computationally impractical on the available CPU, so the final practical experiment uses a first-order baseline.
 
 ## Results
 
 | Model | Forget Accuracy | Retain Accuracy | Test Accuracy |
 |---|---:|---:|---:|
-| Full | 91.00% | 91.06% | 89.07% |
-| Unlearned | 87.00% | 90.45% | 88.10% |
-| Retrained | 90.00% | 92.78% | 89.88% |
+| Full Model | 91.00% | 91.06% | 89.07% |
+| Unlearned Model | 87.00% | 90.45% | 88.10% |
+| Retrained Model | 90.00% | 92.78% | 89.88% |
 
-### Observations
+### Unlearning Effect
 
-- Forgotten-data accuracy decreased by **4.00 percentage points** after the unlearning update.
+- Forgotten-data accuracy decreased by **4.00 percentage points**.
 - Retained-data accuracy decreased by only **0.61 percentage points**.
-- The unlearned model was not identical to the retrained model in parameter space.
+- Forgotten-data loss increased from **0.3639 to 0.4429** after the first-order update.
+
+### Parameter Distance
+
+- Full vs Unlearned relative distance: **0.0091**
+- Unlearned vs Retrained relative distance: **1.2614**
 
 ## Conclusion
 
-The experiment demonstrates **partial approximate machine unlearning**, rather than exact data erasure.
+The experiment demonstrates **partial approximate machine unlearning** using a first-order gradient-ascent update.
 
-The results show that a first-order update can reduce the model's performance on selected forgotten data while largely preserving performance on retained data.
+The forgotten subset became less well represented by the model while performance on the retained data changed only slightly. However, the unlearned model remained substantially different from the retrained model in parameter space.
 
-The project also demonstrates the theoretical and computational use of Hessian-vector products as a foundation for more sophisticated second-order unlearning methods.
-
-## Limitations
-
-- The experiment uses a relatively small MNIST subset.
-- The final practical method is first-order rather than a complete Hessian-inverse solution.
-- A larger-scale experiment would be required to evaluate scalability and stronger unlearning guarantees.
+Therefore, the experiment should not be interpreted as exact data erasure. It provides a practical baseline and demonstrates the theoretical motivation for more sophisticated second-order machine unlearning methods.
 
 ## Technologies
 
 - Python
 - PyTorch
 - Torchvision
-- Google Colab
 - MNIST
+- Google Colab
+
+## Project Structure
+
+```text
+machine-unlearning/
+├── machine_unlearning.ipynb
+└── README.md
