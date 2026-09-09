@@ -1,4 +1,4 @@
-# Approximate Machine Unlearning with Gradient and Curvature Methods
+# Approximate Machine Unlearning with Gradient Ascent
 
 ## Overview
 
